@@ -39,8 +39,13 @@ def scrape_mop():
     soup = bs(html, "lxml")
     all_info = soup.find("div", "event-info")
     food_list = all_info.find_all("p")
+    # print("foodlist:")
+    # for i in food_list:
+    #     print(i.text)
     green = food_list[1].text
     normal = food_list[4].text
+    if "dagens" not in green.lower() or "dagens" not in normal.lower():
+        exit("Error on mop check consistency")
 
     return f"*Moroten och Piskan*:\n{normal}\n{green}"
 
@@ -131,9 +136,9 @@ def scrape_lemani():
 
         # Setting the points for cropped image
         left = 850
-        top = 1100
+        top = 0
         right = 1700
-        bottom = height - 170
+        bottom = height
 
         # Cropped image of above dimension
         # (It will not change original image)
@@ -254,13 +259,13 @@ def setup():
     if find_week_day(day) in weekend:
         return
 
+    mop = scrape_mop()
     scrape_lemani()
     finnut = scrape_finnut()
-    mop = scrape_mop()
     img = "lemani.png"
     msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
     send_message(msg, img)
 
 
 if __name__ == "__main__":
-    main()
+    setup()
