@@ -1,6 +1,7 @@
 from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup as bs
 import requests
 from datetime import datetime
@@ -128,12 +129,21 @@ def scrape_lemani():
     options.add_argument("-profile")
 
     # TODO change
-    profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    #profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
     options.add_argument(profile_dir)
+
     driver = webdriver.Firefox(options=options)
     driver.get(url)
     time.sleep(2)
-    driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
+    try:
+        driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
+    except NoSuchElementException:
+        try:
+            driver.find_element(By.XPATH, '//div[text()="View story"]').click()
+        except NoSuchElementException:
+            driver.quit()
+            return 1
     time.sleep(2)
     driver.get_screenshot_as_file('lemani.png')
     driver.quit()
@@ -153,7 +163,8 @@ def scrape_lemani():
         # (It will not change original image)
         im1 = im.crop((left, top, right, bottom))
 
-        im1.save("lemani.png")
+        im.save("lemani.png")
+    return 0
 
 
 
@@ -232,20 +243,27 @@ def bryggan_bs4():
         print(f"An error occurred: {e}")
 
 
-def send_message(msg, img):
+def send_message(msg, img=None):
     token = os.getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
     # print(client.conversations_list())
 
     # Send message with attachment
-    client.files_upload_v2(
-        channel="C1ZHAEJ8N",
-        file=img,
-        title="Le mani meny",
-        initial_comment=msg,
-        username="LunchTime"
-    )
+    if img:
+        client.files_upload_v2(
+            channel="C1ZHAEJ8N",
+            file=img,
+            title="Le mani meny",
+            initial_comment=msg,
+            username="LunchTime"
+        )
+    else:
+        client.files_upload_v2(
+            channel="C1ZHAEJ8N",
+            initial_comment=msg,
+            username="LunchTime"
+        )
 
 
 def main():
@@ -269,12 +287,17 @@ def setup():
         return
 
     mop = scrape_mop()
-    scrape_lemani()
+    status = scrape_lemani()
     finnut = scrape_finnut()
     img = "lemani.png"
-    msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-    send_message(msg, img)
 
+    if status == 1:  # failed to get le mani
+        msg = f"{finnut}\n{mop}"
+        #send_message(msg)
+    elif status == 0:
+        msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
+        #send_message(msg, img)
+    print(msg)
 
 if __name__ == "__main__":
     setup()
