@@ -42,8 +42,17 @@ def scrape_mop():
     # print("foodlist:")
     # for i in food_list:
     #     print(i.text)
-    green = food_list[1].text
-    normal = food_list[4].text
+    i, j = 0, 0
+    green = food_list[i].text
+    normal = food_list[j].text
+
+    while "gröna" not in green.lower():
+        i += 1
+        green = food_list[i]
+    while ("dagens" not in normal.lower()) or ("gröna" in normal.lower()):
+        j += 1
+        normal = food_list[j]
+
     if "dagens" not in green.lower() or "dagens" not in normal.lower():
         exit("Error on mop check consistency")
 
