@@ -293,10 +293,10 @@ def setup():
 
     if status == 1:  # failed to get le mani
         msg = f"{finnut}\n{mop}"
-        #send_message(msg)
+        send_message(msg)
     elif status == 0:
         msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-        #send_message(msg, img)
+        send_message(msg, img)
     print(msg)
 
 if __name__ == "__main__":
