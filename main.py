@@ -5,7 +5,6 @@ from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup as bs
 import requests
 from datetime import datetime
-import schedule
 from slack_sdk import WebClient
 from date import find_week_day
 from PIL import Image
@@ -43,16 +42,16 @@ def scrape_mop():
     # print("foodlist:")
     # for i in food_list:
     #     print(i.text)
-    i, j = 0, 0
+    i, j = 1, 1
     green = food_list[i].text
     normal = food_list[j].text
 
     while "gröna" not in green.lower():
         i += 1
-        green = food_list[i]
-    while ("dagens" not in normal.lower()) or ("gröna" in normal.lower()):
+        green = food_list[i].text
+    while "dagens" not in normal.lower() or "gröna" in normal.lower():
         j += 1
-        normal = food_list[j]
+        normal = food_list[j].text
 
     if "dagens" not in green.lower() or "dagens" not in normal.lower():
         exit("Error on mop check consistency")
@@ -267,16 +266,6 @@ def send_message(msg, img=None):
 
 
 def main():
-    wanted_time = "11:00"
-
-    schedule.every().day.at(wanted_time).do(setup)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
-
-def setup():
     weekend = ("Saturday", "Sunday")
 
     # day of format YYYY-MM-DD
@@ -293,11 +282,11 @@ def setup():
 
     if status == 1:  # failed to get le mani
         msg = f"{finnut}\n{mop}"
-        #send_message(msg)
+        send_message(msg)
     elif status == 0:
         msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-        #send_message(msg, img)
-    print(msg)
+        send_message(msg, img)
+
 
 if __name__ == "__main__":
-    setup()
+    main()
