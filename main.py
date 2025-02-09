@@ -58,6 +58,15 @@ def scrape_mop():
 
     return f"*Moroten och Piskan*:\n{normal}\n{green}"
 
+def test():
+    import undetected_chromedriver as uc
+
+    driver = uc.Chrome(headless=True)
+    driver.get("https://instagram.com/stories/karsbergruben")
+    driver.save_screenshot("test.png")
+    print(driver.page_source)
+    driver.quit()
+
 
 def scrape_finnut():
     # Format the current date as "day month" in Swedish (e.g., "28 oktober")
@@ -84,8 +93,17 @@ def scrape_finnut():
     # URL to scrape
     url = "https://www.finnut.se/"
 
+    options = webdriver.FirefoxOptions()
+    options.add_argument("-profile")
+
+    # TODO change
+    profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    # profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
+    options.add_argument(profile_dir)
+    options.add_argument("--headless")
     # Open the URL
-    driver = webdriver.Firefox()
+
+    driver = webdriver.Firefox(options=options)
     driver.get(url)
 
     # Loop to find the chosen date or navigate to the next week
@@ -106,7 +124,7 @@ def scrape_finnut():
                 # If date is found, retrieve and print the food information
                 weekday = entry.find_element(By.CSS_SELECTOR, "div.col-md-2 strong").text
                 food_info = entry.find_element(By.CSS_SELECTOR, "div.menu-entry-content").text
-                print(f"Finn ut {weekday} {date}:\n{food_info}\n")
+                #print(f"Finn ut {weekday} {date}:\n{food_info}\n")
                 found_date = True
                 driver.quit()
                 return f"*Luncherbjudanden {weekday} {date}:*\n\n*Finn ut:*\n{food_info}\n\n"
@@ -123,30 +141,46 @@ def scrape_finnut():
 
 def scrape_lemani():
     # LE MANI TIME
-    url = "https://www.instagram.com/stories/lemanilund"
+    #url = "https://www.instagram.com/stories/lemanilund"
+    url = "https://www.instagram.com/stories/9gag"
+
     options = webdriver.FirefoxOptions()
+    #options = webdriver.ChromeOptions()
     options.add_argument("-profile")
 
     # TODO change
-    #profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
-    profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
+    profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    #profile_dir = "/Users/william/Library/Application Support/Firefox/Profiles/u5kz6uyw.default-release-1695907819837"
+    #profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
+    #profile_dir = "/Users/william/Library/Application Support/Google/Chrome/Profile 2"
     options.add_argument(profile_dir)
+    options.add_argument("--headless")
+    options.add_argument("--enable-javascript")
+    options.add_argument("--incognito")
+    options.add_argument("--nogpu")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1280,1280")
+    options.add_argument("--no-sandbox")
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     driver = webdriver.Firefox(options=options)
     driver.get(url)
-    time.sleep(2)
+    time.sleep(3)
+    driver.get_screenshot_as_file('lemani.png')
     try:
         driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
     except NoSuchElementException:
         try:
             driver.find_element(By.XPATH, '//div[text()="View story"]').click()
         except NoSuchElementException:
+            print("not found")
             driver.quit()
+
             return 1
     time.sleep(2)
     driver.get_screenshot_as_file('lemani.png')
     driver.quit()
-
+    return
     with Image.open("lemani.png") as im:
         # Size of the image in pixels (size of original image)
         # (This is not mandatory)
@@ -246,9 +280,9 @@ def send_message(msg, img=None):
     token = os.getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
-    # print(client.conversations_list())
+    print(client.conversations_list())
 
-    # Send message with attachment
+    #Send message with attachment
     if img:
         client.files_upload_v2(
             channel="C1ZHAEJ8N",
@@ -273,20 +307,28 @@ def main():
 
     # Dont post on weekends
     if find_week_day(day) in weekend:
-        return
+        pass
+        #return
 
-    mop = scrape_mop()
+    #mop = scrape_mop()
+    #test()
+
     status = scrape_lemani()
-    finnut = scrape_finnut()
+    #finnut = scrape_finnut()
+    #print(mop)
+    #print(status)
+    #print(finnut)
+    return
     img = "lemani.png"
 
     if status == 1:  # failed to get le mani
         msg = f"{finnut}\n{mop}"
-        send_message(msg)
+        #send_message(msg)
+        print(msg)
     elif status == 0:
         msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-        send_message(msg, img)
-    print(msg)
+        #send_message(msg, img)
+        print(msg)
 
 
 if __name__ == "__main__":
