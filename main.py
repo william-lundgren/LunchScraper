@@ -2,7 +2,7 @@ from sys import platform
 from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from bs4 import BeautifulSoup as bs
 import requests
 from datetime import datetime
@@ -11,6 +11,9 @@ from date import find_week_day
 from PIL import Image
 from os import getenv
 
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 """
 TODOs:
 Download image from story every day
@@ -159,15 +162,26 @@ def scrape_lemani(profile_dir):
 
     # In case cookies for some reason reset
     try:
-        driver.find_element(By.XPATH, '//div[text()="Tillåt alla cookies"]').click()
-    except NoSuchElementException:
+        wait = WebDriverWait(driver, 3)
+        button_def = (By.XPATH, "//button[text()='Tillåt alla cookies']")
+        button = wait.until(EC.element_to_be_clickable(button_def))
+        button.click()
+        time.sleep(2)
+    except (NoSuchElementException, TimeoutException):
         try:
-            driver.find_element(By.XPATH, '//div[text()="Allow all cookies"]').click()
-        except NoSuchElementException:
+            wait = WebDriverWait(driver, 3)
+            button_def = (By.XPATH, "//button[text()='Allow all cookies']")
+            button = wait.until(EC.element_to_be_clickable(button_def))
+            button.click()
+            time.sleep(2)
+        except (NoSuchElementException, TimeoutException):
+            print("no cookie option")
             pass
 
-    time.sleep(1)
+    print("saving")
+    driver.get_screenshot_as_file('lemani.png')
 
+    time.sleep(1)
     try:
         driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
     except NoSuchElementException:
@@ -180,6 +194,7 @@ def scrape_lemani(profile_dir):
             return 1
 
     time.sleep(1)
+
     driver.get_screenshot_as_file('lemani.png')
     driver.quit()
 
@@ -308,8 +323,7 @@ def main():
 
     # Dont post on weekends
     if find_week_day(day) in weekend:
-        pass
-        #return
+        return
 
     # Check if os is mac
     if platform == "darwin":
@@ -321,8 +335,8 @@ def main():
     else:
         raise EnvironmentError("Provide path to profile")
 
-    mop = scrape_mop()
     status = scrape_lemani(profile_dir)
+    mop = scrape_mop()
     finnut = scrape_finnut(profile_dir)
 
     print(mop)
