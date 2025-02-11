@@ -1,3 +1,4 @@
+from sys import platform
 from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
@@ -8,7 +9,7 @@ from datetime import datetime
 from slack_sdk import WebClient
 from date import find_week_day
 from PIL import Image
-import os
+from os import getenv
 
 """
 TODOs:
@@ -141,18 +142,21 @@ def scrape_finnut():
 
 def scrape_lemani():
     # LE MANI TIME
-    #url = "https://www.instagram.com/stories/lemanilund"
-    url = "https://www.instagram.com/stories/9gag"
+    url = "https://www.instagram.com/stories/lemanilund"
 
     options = webdriver.FirefoxOptions()
-    #options = webdriver.ChromeOptions()
     options.add_argument("-profile")
 
-    # TODO change
-    profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
-    #profile_dir = "/Users/william/Library/Application Support/Firefox/Profiles/u5kz6uyw.default-release-1695907819837"
-    #profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
-    #profile_dir = "/Users/william/Library/Application Support/Google/Chrome/Profile 2"
+    # Check if os is mac
+    if platform == "darwin":
+        # path for testing on mac
+        profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    elif platform == "linux":
+        # path for ubuntu server
+        profile_dir = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
+    else:
+        raise EnvironmentError("Provide path to profile")
+
     options.add_argument(profile_dir)
     options.add_argument("--headless")
     options.add_argument("--enable-javascript")
@@ -165,6 +169,7 @@ def scrape_lemani():
 
     driver = webdriver.Firefox(options=options)
     driver.get(url)
+
     time.sleep(3)
     driver.get_screenshot_as_file('lemani.png')
     try:
@@ -177,28 +182,28 @@ def scrape_lemani():
             driver.quit()
 
             return 1
+
     time.sleep(2)
     driver.get_screenshot_as_file('lemani.png')
     driver.quit()
-    return
+
     with Image.open("lemani.png") as im:
         # Size of the image in pixels (size of original image)
         # (This is not mandatory)
         width, height = im.size
 
         # Setting the points for cropped image
-        left = 850
+        left = 450
         top = 0
-        right = 1700
+        right = 817
         bottom = height
 
         # Cropped image of above dimension
         # (It will not change original image)
         im1 = im.crop((left, top, right, bottom))
 
-        im.save("lemani.png")
+        im1.save("lemani.png")
     return 0
-
 
 
 def scrape_bryggan():
@@ -277,7 +282,7 @@ def bryggan_bs4():
 
 
 def send_message(msg, img=None):
-    token = os.getenv("token")
+    token = getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
     print(client.conversations_list())
@@ -310,15 +315,15 @@ def main():
         pass
         #return
 
-    #mop = scrape_mop()
+    mop = scrape_mop()
     #test()
 
     status = scrape_lemani()
-    #finnut = scrape_finnut()
-    #print(mop)
-    #print(status)
-    #print(finnut)
-    return
+    finnut = scrape_finnut()
+    print(mop)
+    print(status)
+    print(finnut)
+
     img = "lemani.png"
 
     if status == 1:  # failed to get le mani
