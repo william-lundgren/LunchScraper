@@ -69,7 +69,7 @@ def test():
     driver.quit()
 
 
-def scrape_finnut():
+def scrape_finnut(profile_dir):
     # Format the current date as "day month" in Swedish (e.g., "28 oktober")
     chosen_date = datetime.now().strftime("%-d %B").lower()
     months_translation = {
@@ -97,9 +97,6 @@ def scrape_finnut():
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
 
-    # TODO change
-    profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
-    # profile_dir = "/home/william/.mozilla/firefox/46sgs1s0.default"
     options.add_argument(profile_dir)
     options.add_argument("--headless")
     # Open the URL
@@ -140,22 +137,12 @@ def scrape_finnut():
     driver.quit()
 
 
-def scrape_lemani():
+def scrape_lemani(profile_dir):
     # LE MANI TIME
     url = "https://www.instagram.com/stories/lemanilund"
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
-
-    # Check if os is mac
-    if platform == "darwin":
-        # path for testing on mac
-        profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
-    elif platform == "linux":
-        # path for ubuntu server
-        profile_dir = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
-    else:
-        raise EnvironmentError("Provide path to profile")
 
     options.add_argument(profile_dir)
     options.add_argument("--headless")
@@ -315,11 +302,20 @@ def main():
         pass
         #return
 
-    mop = scrape_mop()
-    #test()
+    # Check if os is mac
+    if platform == "darwin":
+        # path for testing on mac
+        profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+    elif platform == "linux":
+        # path for ubuntu server
+        profile_dir = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
+    else:
+        raise EnvironmentError("Provide path to profile")
 
-    status = scrape_lemani()
-    finnut = scrape_finnut()
+    mop = scrape_mop()
+    status = scrape_lemani(profile_dir)
+    finnut = scrape_finnut(profile_dir)
+
     print(mop)
     print(status)
     print(finnut)
