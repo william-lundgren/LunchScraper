@@ -157,8 +157,17 @@ def scrape_lemani(profile_dir):
     driver = webdriver.Firefox(options=options)
     driver.get(url)
 
-    time.sleep(3)
-    driver.get_screenshot_as_file('lemani.png')
+    # In case cookies for some reason reset
+    try:
+        driver.find_element(By.XPATH, '//div[text()="Tillåt alla cookies"]').click()
+    except NoSuchElementException:
+        try:
+            driver.find_element(By.XPATH, '//div[text()="Allow all cookies"]').click()
+        except NoSuchElementException:
+            pass
+
+    time.sleep(1)
+
     try:
         driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
     except NoSuchElementException:
@@ -170,7 +179,7 @@ def scrape_lemani(profile_dir):
 
             return 1
 
-    time.sleep(2)
+    time.sleep(1)
     driver.get_screenshot_as_file('lemani.png')
     driver.quit()
 
