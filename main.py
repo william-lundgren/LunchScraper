@@ -10,10 +10,9 @@ from slack_sdk import WebClient
 from date import find_week_day
 from PIL import Image
 from os import getenv
-
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
 """
 TODOs:
 Download image from story every day
@@ -61,15 +60,6 @@ def scrape_mop():
         exit("Error on mop check consistency")
 
     return f"*Moroten och Piskan*:\n{normal}\n{green}"
-
-def test():
-    import undetected_chromedriver as uc
-
-    driver = uc.Chrome(headless=True)
-    driver.get("https://instagram.com/stories/karsbergruben")
-    driver.save_screenshot("test.png")
-    print(driver.page_source)
-    driver.quit()
 
 
 def scrape_finnut(profile_dir):
@@ -142,7 +132,7 @@ def scrape_finnut(profile_dir):
 
 def scrape_lemani(profile_dir):
     # LE MANI TIME
-    url = "https://www.instagram.com/stories/lemanilund"
+    url = "https://www.instagram.com/stories/9gag"
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
@@ -178,10 +168,8 @@ def scrape_lemani(profile_dir):
             print("no cookie option")
             pass
 
-    print("saving")
-    driver.get_screenshot_as_file('lemani.png')
-
     time.sleep(1)
+
     try:
         driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
     except NoSuchElementException:
@@ -204,9 +192,9 @@ def scrape_lemani(profile_dir):
         width, height = im.size
 
         # Setting the points for cropped image
-        left = 450
+        left = 400
         top = 0
-        right = 817
+        right = 850
         bottom = height
 
         # Cropped image of above dimension
@@ -296,12 +284,15 @@ def send_message(msg, img=None):
     token = getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
+    print(token)
     print(client.conversations_list())
 
-    #Send message with attachment
+    # actual channel : C07U42LRMQA
+
+    # Send message with attachment
     if img:
         client.files_upload_v2(
-            channel="C1ZHAEJ8N",
+            channel="C08CRCJHWDB",
             file=img,
             title="Le mani meny",
             initial_comment=msg,
@@ -336,8 +327,14 @@ def main():
         raise EnvironmentError("Provide path to profile")
 
     status = scrape_lemani(profile_dir)
-    mop = scrape_mop()
-    finnut = scrape_finnut(profile_dir)
+    try:
+        mop = scrape_mop()
+    except Exception:
+        mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:"
+    try:
+        finnut = scrape_finnut(profile_dir)
+    except Exception:
+        finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:"
 
     print(mop)
     print(status)
@@ -347,11 +344,11 @@ def main():
 
     if status == 1:  # failed to get le mani
         msg = f"{finnut}\n{mop}"
-        #send_message(msg)
+        send_message(msg)
         print(msg)
     elif status == 0:
         msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-        #send_message(msg, img)
+        send_message(msg, img)
         print(msg)
 
 
