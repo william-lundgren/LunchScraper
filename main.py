@@ -285,7 +285,8 @@ def send_message(msg, img=None):
     client = WebClient(token=token)
     print(client.conversations_list())
     # Send message with attachment
-    meme = f"memes/meme_{randint(0,28)}.png"
+    meme_num = randint(0,28)
+    meme = f"memes/meme_{meme_num}.png"
     # if img:
     #     client.files_upload_v2(
     #         channel="C08CZLA7CE6",
@@ -313,7 +314,7 @@ def send_message(msg, img=None):
             },
         ],
         channel="C08CZLA7CE6",
-        initial_comment=msg,
+        initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else "",
     )
 
 
