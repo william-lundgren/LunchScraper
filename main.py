@@ -12,7 +12,7 @@ from PIL import Image
 from os import getenv
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
+from random import randint
 """
 TODOs:
 Download image from story every day
@@ -31,7 +31,6 @@ ica????
 mop
 taste the chinese?
 """
-
 
 def scrape_mop():
     url = "https://morotenopiskan.se/"
@@ -132,7 +131,7 @@ def scrape_finnut(profile_dir):
 
 def scrape_lemani(profile_dir):
     # LE MANI TIME
-    url = "https://www.instagram.com/stories/9gag"
+    url = "https://www.instagram.com/stories/lemanilund"
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
@@ -284,26 +283,38 @@ def send_message(msg, img=None):
     token = getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
-    print(token)
     print(client.conversations_list())
-
-    # actual channel : C07U42LRMQA
-
     # Send message with attachment
-    if img:
-        client.files_upload_v2(
-            channel="C08CRCJHWDB",
-            file=img,
-            title="Le mani meny",
-            initial_comment=msg,
-            username="LunchTime"
-        )
-    else:
-        client.files_upload_v2(
-            channel="C1ZHAEJ8N",
-            initial_comment=msg,
-            username="LunchTime"
-        )
+    meme = f"memes/meme_{randint(0,28)}.png"
+    # if img:
+    #     client.files_upload_v2(
+    #         channel="C08CZLA7CE6",
+    #         file=img,
+    #         title="Le mani meny",
+    #         initial_comment=msg,
+    #         username="LunchTime"
+    #     )
+    # else:
+    #     client.files_upload_v2(
+    #         channel="C08CZLA7CE6",
+    #         initial_comment=msg,
+    #         username="LunchTime"
+    #     )
+
+    client.files_upload_v2(
+        file_uploads=[
+            {
+                "file": img,
+                "title": "Le mani meny",
+            },
+            {
+                "file": meme,
+                "title": "Relevant meme",
+            },
+        ],
+        channel="C08CZLA7CE6",
+        initial_comment=msg,
+    )
 
 
 def main():
