@@ -286,7 +286,7 @@ def send_message(msg, img=None):
     # print(client.conversations_list())
     # Send message with attachment
     meme_num = randint(0, 28)
-    meme = f"/home/william/FoodScraperProject/LunchScraper/memes/meme_{meme_num}.png"
+    meme = f"memes/meme_{meme_num}.png"
     # if img:
     #     client.files_upload_v2(
     #         channel="C08CZLA7CE6",
