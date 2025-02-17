@@ -13,6 +13,7 @@ from os import getenv
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from random import randint
+
 """
 TODOs:
 Download image from story every day
@@ -31,6 +32,7 @@ ica????
 mop
 taste the chinese?
 """
+
 
 def scrape_mop():
     url = "https://morotenopiskan.se/"
@@ -114,7 +116,7 @@ def scrape_finnut(profile_dir):
                 # If date is found, retrieve and print the food information
                 weekday = entry.find_element(By.CSS_SELECTOR, "div.col-md-2 strong").text
                 food_info = entry.find_element(By.CSS_SELECTOR, "div.menu-entry-content").text
-                #print(f"Finn ut {weekday} {date}:\n{food_info}\n")
+                # print(f"Finn ut {weekday} {date}:\n{food_info}\n")
                 found_date = True
                 driver.quit()
                 return f"*Luncherbjudanden {weekday} {date}:*\n\n*Finn ut:*\n{food_info}\n\n"
@@ -289,31 +291,29 @@ def send_message(msg, img=None):
     meme = f"/home/william/FoodScraperProject/LunchScraper/memes/meme_{meme_num}.png"
     # Bot channel: C08CZLA7CE6
     if img:
-        client.files_upload_v2(
-            file_uploads=[
-                {
-                    "file": img,
-                    "title": "Le mani meny",
-                },
-                {
-                    "file": meme,
-                    "title": "Relevant meme",
-                },
-            ],
-            channel=getenv("channel"),
-            initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
-        )
+        files = [
+            {
+                "file": img,
+                "title": "Le mani meny"
+            },
+            {
+                "file": meme,
+                "title": "Relevant meme"
+            }
+        ]
     else:
-        client.files_upload_v2(
-            file_uploads=[
-                {
-                    "file": meme,
-                    "title": "Relevant meme",
-                },
-            ],
-            channel=getenv("channel"),
-            initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
-        )
+        files = [
+            {
+                "file": meme,
+                "title": "Relevant meme"
+            }
+        ]
+
+    client.files_upload_v2(
+        file_uploads=files,
+        channel=getenv("channel"),
+        initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg
+    )
 
 
 def main():
