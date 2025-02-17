@@ -286,36 +286,34 @@ def send_message(msg, img=None):
     # print(client.conversations_list())
     # Send message with attachment
     meme_num = randint(0, 28)
-    meme = f"memes/meme_{meme_num}.png"
-    # if img:
-    #     client.files_upload_v2(
-    #         channel="C08CZLA7CE6",
-    #         file=img,
-    #         title="Le mani meny",
-    #         initial_comment=msg,
-    #         username="LunchTime"
-    #     )
-    # else:
-    #     client.files_upload_v2(
-    #         channel="C08CZLA7CE6",
-    #         initial_comment=msg,
-    #         username="LunchTime"
-    #     )
-
-    client.files_upload_v2(
-        file_uploads=[
-            {
-                "file": img,
-                "title": "Le mani meny",
-            },
-            {
-                "file": meme,
-                "title": "Relevant meme",
-            },
-        ],
-        channel=getenv("channel"),
-        initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
-    )
+    meme = f"/home/william/FoodScraperProject/LunchScraper/memes/meme_{meme_num}.png"
+    # Bot channel: C08CZLA7CE6
+    if img:
+        client.files_upload_v2(
+            file_uploads=[
+                {
+                    "file": img,
+                    "title": "Le mani meny",
+                },
+                {
+                    "file": meme,
+                    "title": "Relevant meme",
+                },
+            ],
+            channel=getenv("channel"),
+            initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
+        )
+    else:
+        client.files_upload_v2(
+            file_uploads=[
+                {
+                    "file": meme,
+                    "title": "Relevant meme",
+                },
+            ],
+            channel=getenv("channel"),
+            initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
+        )
 
 
 def main():
