@@ -285,7 +285,7 @@ def send_message(msg, img=None):
     client = WebClient(token=token)
     # print(client.conversations_list())
     # Send message with attachment
-    meme_num = randint(0,28)
+    meme_num = randint(0, 28)
     meme = f"/home/william/FoodScraperProject/LunchScraper/memes/meme_{meme_num}.png"
     # if img:
     #     client.files_upload_v2(
@@ -313,7 +313,7 @@ def send_message(msg, img=None):
                 "title": "Relevant meme",
             },
         ],
-        channel="C1ZHAEJ8N",
+        channel=getenv("channel"),
         initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg,
     )
 
