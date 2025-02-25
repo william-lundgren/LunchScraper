@@ -13,6 +13,7 @@ from os import getenv
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from random import randint
+from pathlib import Path
 
 """
 TODOs:
@@ -32,6 +33,31 @@ ica????
 mop
 taste the chinese?
 """
+
+
+def get_date():
+    # Format the current date as "day month" in Swedish (e.g., "28 oktober")
+    chosen_date = datetime.now().strftime("%-d %B").lower()
+
+    months_translation = {
+        "january": "januari",
+        "february": "februari",
+        "march": "mars",
+        "april": "april",
+        "may": "maj",
+        "june": "juni",
+        "july": "juli",
+        "august": "augusti",
+        "september": "september",
+        "october": "oktober",
+        "november": "november",
+        "december": "december"
+    }
+    for eng_month, swe_month in months_translation.items():
+        if eng_month in chosen_date.lower():
+            chosen_date = chosen_date.lower().replace(eng_month, swe_month)
+
+    return chosen_date
 
 
 def scrape_mop():
@@ -60,29 +86,11 @@ def scrape_mop():
     if "dagens" not in green.lower() or "dagens" not in normal.lower():
         exit("Error on mop check consistency")
 
-    return f"*Moroten och Piskan*:\n{normal}\n{green}"
+    return f"\n{normal}\n{green}"
 
 
 def scrape_finnut(profile_dir):
-    # Format the current date as "day month" in Swedish (e.g., "28 oktober")
-    chosen_date = datetime.now().strftime("%-d %B").lower()
-    months_translation = {
-        "january": "januari",
-        "february": "februari",
-        "march": "mars",
-        "april": "april",
-        "may": "maj",
-        "june": "juni",
-        "july": "juli",
-        "august": "augusti",
-        "september": "september",
-        "october": "oktober",
-        "november": "november",
-        "december": "december"
-    }
-    for eng_month, swe_month in months_translation.items():
-        if eng_month in chosen_date.lower():
-            chosen_date = chosen_date.lower().replace(eng_month, swe_month)
+    chosen_date = get_date()
     print(chosen_date)
 
     # URL to scrape
@@ -119,7 +127,7 @@ def scrape_finnut(profile_dir):
                 # print(f"Finn ut {weekday} {date}:\n{food_info}\n")
                 found_date = True
                 driver.quit()
-                return f"*Luncherbjudanden {weekday} {date}:*\n\n*Finn ut:*\n{food_info}\n\n"
+                return f"{food_info}\n\n"
 
         # If date is not found, click the "next week" button to navigate forward
         if not found_date:
@@ -129,15 +137,16 @@ def scrape_finnut(profile_dir):
 
     # Close the browser
     driver.quit()
+    raise RuntimeError("Didnt find food")
 
 
 def scrape_lemani(profile_dir):
     # LE MANI TIME
     url = "https://www.instagram.com/stories/lemanilund"
+    print("Trying Le mani")
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
-
     options.add_argument(profile_dir)
     options.add_argument("--headless")
     options.add_argument("--enable-javascript")
@@ -149,7 +158,10 @@ def scrape_lemani(profile_dir):
     options.add_argument('--disable-blink-features=AutomationControlled')
 
     driver = webdriver.Firefox(options=options)
+    print("Webdriver created.")
+
     driver.get(url)
+    print("Url received.")
 
     # In case cookies for some reason reset
     try:
@@ -157,6 +169,7 @@ def scrape_lemani(profile_dir):
         button_def = (By.XPATH, "//button[text()='Tillåt alla cookies']")
         button = wait.until(EC.element_to_be_clickable(button_def))
         button.click()
+        print("Clicked cookie")
         time.sleep(2)
     except (NoSuchElementException, TimeoutException):
         try:
@@ -164,27 +177,33 @@ def scrape_lemani(profile_dir):
             button_def = (By.XPATH, "//button[text()='Allow all cookies']")
             button = wait.until(EC.element_to_be_clickable(button_def))
             button.click()
+            print("Clicked cookie")
             time.sleep(2)
         except (NoSuchElementException, TimeoutException):
-            print("no cookie option")
+            print("No cookie option")
             pass
 
     time.sleep(1)
 
     try:
         driver.find_element(By.XPATH, '//div[text()="Visa händelse"]').click()
+        print("Shown story")
     except NoSuchElementException:
         try:
             driver.find_element(By.XPATH, '//div[text()="View story"]').click()
+            print("Shown story")
         except NoSuchElementException:
-            print("not found")
+            # TODO implement a check to see if breaking or just no story.
+            print("Story could not be found, not adding picture.")
             driver.quit()
 
             return 1
 
     time.sleep(1)
 
+    print("Saving lemani screenshot")
     driver.get_screenshot_as_file('lemani.png')
+
     driver.quit()
 
     with Image.open("lemani.png") as im:
@@ -203,6 +222,8 @@ def scrape_lemani(profile_dir):
         im1 = im.crop((left, top, right, bottom))
 
         im1.save("lemani.png")
+
+    print("Le mani succeeded")
     return 0
 
 
@@ -281,50 +302,65 @@ def bryggan_bs4():
         print(f"An error occurred: {e}")
 
 
-def send_message(msg, img=None):
+def send_message(msg, attachments=None):
+    #find_week_day()
     token = getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
     # print(client.conversations_list())
-    # Send message with attachment
     meme_num = randint(0, 28)
-    meme = f"/home/william/FoodScraperProject/LunchScraper/memes/meme_{meme_num}.png"
+
+    # Get the absolute path to the project directory
+    project_dir = Path(__file__).resolve().parent
+
+    # Get random meme
+    meme = f"{project_dir}/memes/meme_{meme_num}.png"
+
     # Bot channel: C08CZLA7CE6
-    if img:
+
+    # If image was successfully collected attach it, otherwise sent message without.
+    # Add description to say it failed to collect image.
+
+    if not attachments:
         files = [
             {
-                "file": img,
-                "title": "Le mani meny"
+                "file": meme,
+                "title": "Relevant meme"
+            }
+        ]
+    elif len(attachments) == 1:
+        file = attachments[0]
+        files = [
+            {
+                "file": file,
+                "title": file.split("/")[-1].removesuffix(".png")
             },
+
             {
                 "file": meme,
                 "title": "Relevant meme"
             }
         ]
+
     else:
-        files = [
-            {
-                "file": meme,
+        files = []
+        for file_name in attachments:
+            dict_obt = {
+                "file": file_name,
                 "title": "Relevant meme"
             }
-        ]
+
+            files.append(dict_obt)
 
     client.files_upload_v2(
         file_uploads=files,
         channel=getenv("channel"),
-        initial_comment=msg + "meme dedicated to @NA" if meme_num == 4 else msg
+        initial_comment=msg #+ " meme dedicated to @NA" if meme_num == 4 else msg
     )
 
 
 def main():
-    weekend = ("Saturday", "Sunday")
-
-    # day of format YYYY-MM-DD
-    day = datetime.today().strftime('%Y-%m-%d')
-
-    # Dont post on weekends
-    if find_week_day(day) in weekend:
-        return
+    project_dir = Path(__file__).resolve().parent
 
     # Check if os is mac
     if platform == "darwin":
@@ -335,31 +371,52 @@ def main():
         profile_dir = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
     else:
         raise EnvironmentError("Provide path to profile")
+    attachments = []
 
-    status = scrape_lemani(profile_dir)
+    lemani_code = scrape_lemani(profile_dir)
+    print("Status:",lemani_code)
+    if lemani_code == 0:
+        attachments.append(f"{project_dir}/lemani.png")
+
+    try:
+        print("Trying finnut")
+        finnut = scrape_finnut(profile_dir)
+    except Exception as e:
+        finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:\n"
+        print("Finn ut died")
+        print(e)
+        meme = f"{project_dir}/memes/finnut_broke.png"
+        attachments.append(meme)
     try:
         mop = scrape_mop()
     except Exception:
-        mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:"
-    try:
-        finnut = scrape_finnut(profile_dir)
-    except Exception:
-        finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:"
+        mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:\n"
+        meme = f"{project_dir}/memes/mop_broke.png"
+        attachments.append(meme)
 
-    print(mop)
-    print(status)
-    print(finnut)
+    # print(mop)
+    # print(status)
+    # print(finnut)
 
-    img = "lemani.png"
+    if lemani_code == 0:  # successfully got le mani
+        lemani = "*Le mani pasta för dagen:*"
+    elif lemani_code == 1:  # failed to get le mani
+        lemani = "*Kunde inte hämta Le mani, ingen story upplagd. Cry about it.*"
+    else:
+        raise ValueError("Unhandled code")
 
-    if status == 1:  # failed to get le mani
-        msg = f"{finnut}\n{mop}"
-        send_message(msg)
-        print(msg)
-    elif status == 0:
-        msg = f"{finnut}\n{mop}\n\n\n*Le mani pasta för dagen:*"
-        send_message(msg, img)
-        print(msg)
+    title = f"*Luncherbjudanden {get_date()}:*"
+
+    mop_title = "*Moroten och Piskan:*"
+    finnut_title = "*Finn ut:*"
+
+    mop_part = f"{mop_title}\n{mop}"
+    finnut_part = f"{finnut_title}\n{finnut}"
+
+    msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n\n{lemani}"
+
+    # Send message with potential image attachment(s?)
+    send_message(msg, attachments)
 
 
 if __name__ == "__main__":
