@@ -103,7 +103,16 @@ def scrape_finnut(profile_dir):
     options.add_argument("--headless")
     # Open the URL
 
-    driver = webdriver.Firefox(options=options)
+    if platform == "darwin":
+        # path for testing on mac
+        driver = webdriver.Firefox(options=options)
+    elif platform == "linux":
+        geckodriver_path = "/snap/bin/geckodriver"
+        driver_service = webdriver.FirefoxService(executable_path=geckodriver_path)
+        driver = webdriver.Firefox(options=options, service=driver_service)
+    else:
+        raise EnvironmentError("Provide path to profile")
+
     driver.get(url)
 
     # Loop to find the chosen date or navigate to the next week
@@ -161,7 +170,15 @@ def scrape_lemani(profile_dir):
     options.add_argument("--no-sandbox")
     options.add_argument('--disable-blink-features=AutomationControlled')
 
-    driver = webdriver.Firefox(options=options)
+    if platform == "darwin":
+        # path for testing on mac
+        driver = webdriver.Firefox(options=options)
+    elif platform == "linux":
+        geckodriver_path = "/snap/bin/geckodriver"
+        driver_service = webdriver.FirefoxService(executable_path=geckodriver_path)
+        driver = webdriver.Firefox(options=options, service=driver_service)
+    else:
+        raise EnvironmentError("Provide path to profile")
     print("Webdriver created.")
 
     driver.get(url)
@@ -230,81 +247,6 @@ def scrape_lemani(profile_dir):
 
     print("Le mani succeeded")
     return 0
-
-
-def scrape_bryggan():
-    # Start the WebDriver and open the webpage
-    driver = webdriver.Firefox()
-    driver.get("https://mersmak.me/vara-stallen/bryggan/")
-
-    # Get today's weekday in Swedish with capitalized translations
-    weekday_translation = {
-        "monday": "Måndag",
-        "tuesday": "Tisdag",
-        "wednesday": "Onsdag",
-        "thursday": "Torsdag",
-        "friday": "Fredag",
-        "saturday": "Lördag",
-        "sunday": "Söndag"
-    }
-    current_weekday = datetime.now().strftime("%A").lower()  # e.g., "monday"
-    swedish_weekday = weekday_translation[current_weekday]
-
-    # Wait for page elements to load
-    time.sleep(3)
-
-    # Locate and extract the menu for the current day
-    try:
-        # Find the element that contains today's weekday in Swedish
-        day_container = driver.find_element(By.XPATH, f"//*[contains(text(), '{swedish_weekday}')]")
-
-        # Locate the specific food information element for the current weekday
-        food_info = day_container.find_element(By.XPATH, "following-sibling::div[1]").text
-
-        print(f"Menu for {swedish_weekday}:\n{food_info}")
-    except Exception as e:
-        print(f"Could not find menu for {swedish_weekday}: {e}")
-        food_info = "No menu found."
-
-    # Close the WebDriver
-    driver.quit()
-
-    return food_info
-
-
-def bryggan_bs4():
-    # Fetch the webpage content
-    url = "https://mersmak.me/vara-stallen/bryggan/"
-    response = requests.get(url)
-    soup = bs(response.content, 'html.parser')
-
-    # Get today's weekday in Swedish with capitalized translations
-    weekday_translation = {
-        "monday": "Måndag",
-        "tuesday": "Tisdag",
-        "wednesday": "Onsdag",
-        "thursday": "Torsdag",
-        "friday": "Fredag",
-        "saturday": "Lördag",
-        "sunday": "Söndag"
-    }
-    current_weekday = datetime.now().strftime("%A").lower()  # e.g., "monday"
-    swedish_weekday = weekday_translation[current_weekday]
-
-    # Find today's menu based on the Swedish weekday
-    try:
-        # Locate the element containing today's weekday name
-        day_container = soup.find(lambda tag: tag.name == "div" and swedish_weekday in tag.get_text())
-
-        # If we find the weekday container, get its parent's next sibling containing the menu
-        if day_container and day_container.parent:
-            # Locate the sibling that should contain the food information
-            food_info = day_container.find_next_sibling("div").get_text(strip=True)
-            print(f"Menu for {swedish_weekday}:\n{food_info}")
-        else:
-            print(f"Could not find menu for {swedish_weekday}.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 
 def send_message(msg, attachments=None):
