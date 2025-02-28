@@ -145,6 +145,10 @@ def scrape_lemani(profile_dir):
     url = "https://www.instagram.com/stories/lemanilund"
     print("Trying Le mani")
 
+    # Get the absolute path to the project directory
+    project_dir = Path(__file__).resolve().parent
+
+
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
     options.add_argument(profile_dir)
@@ -202,11 +206,11 @@ def scrape_lemani(profile_dir):
     time.sleep(1)
 
     print("Saving lemani screenshot")
-    driver.get_screenshot_as_file('lemani.png')
+    driver.get_screenshot_as_file(f'{project_dir}/lemani.png')
 
     driver.quit()
 
-    with Image.open("lemani.png") as im:
+    with Image.open(f"{project_dir}/lemani.png") as im:
         # Size of the image in pixels (size of original image)
         # (This is not mandatory)
         width, height = im.size
@@ -221,7 +225,8 @@ def scrape_lemani(profile_dir):
         # (It will not change original image)
         im1 = im.crop((left, top, right, bottom))
 
-        im1.save("lemani.png")
+        im1.save(f"{project_dir}/lemani.png")
+
 
     print("Le mani succeeded")
     return 0
