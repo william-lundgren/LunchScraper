@@ -14,6 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from random import randint
 from pathlib import Path
+import re
 
 """
 TODOs:
@@ -33,6 +34,20 @@ ica????
 mop
 taste the chinese?
 """
+
+
+def get_weekday(date=None):
+    # Get today's weekday number (0 = Monday, 6 = Sunday)
+    if date:
+        weekday_number = date.weekday()
+    else:
+        weekday_number = datetime.today().weekday()
+
+    # List of weekdays in Swedish
+    weekdays = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"]
+
+    # Print today's weekday in Swedish
+    return weekdays[weekday_number]
 
 
 def get_date():
@@ -89,9 +104,33 @@ def scrape_mop():
     return f"\n{normal}\n{green}"
 
 
+def scrape_bryggan():
+    with open("bryggan2.html") as file:
+        content = file.read()
+
+    url = "https://mersmak.me/vara-stallen/bryggan/"
+    response = requests.get(url)
+    content = response.content
+    soup = bs(content, "lxml")
+
+    # Get todays weekday in Swedish
+    week_day = get_weekday()
+
+    pattern = re.compile(r"LUNCHMENY", re.IGNORECASE)
+    result = soup.find(string=pattern)
+    foods = result.next.next.text
+
+    foods_list = foods.split("\n")
+
+    rel_index = foods_list.index(week_day)
+    foods = foods_list[rel_index + 1: rel_index + 3]
+
+    return "\n".join(foods)
+
+
+
 def scrape_finnut(profile_dir):
     chosen_date = get_date()
-    print(chosen_date)
 
     # URL to scrape
     url = "https://www.finnut.se/"
@@ -156,7 +195,6 @@ def scrape_lemani(profile_dir):
 
     # Get the absolute path to the project directory
     project_dir = Path(__file__).resolve().parent
-
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
@@ -322,6 +360,7 @@ def main():
 
     lemani_code = scrape_lemani(profile_dir)
     print("Status:",lemani_code)
+
     if lemani_code == 0:
         attachments.append(f"{project_dir}/lemani.png")
 
@@ -334,6 +373,7 @@ def main():
         print(e)
         meme = f"{project_dir}/memes/finnut_broke.png"
         attachments.append(meme)
+
     try:
         mop = scrape_mop()
     except Exception:
@@ -341,9 +381,10 @@ def main():
         meme = f"{project_dir}/memes/mop_broke.png"
         attachments.append(meme)
 
-    # print(mop)
-    # print(status)
-    # print(finnut)
+    try:
+        bryggan = scrape_bryggan()
+    except Exception:
+        bryggan = ""
 
     if lemani_code == 0:  # successfully got le mani
         lemani = "*Le mani pasta för dagen:*"
@@ -356,11 +397,16 @@ def main():
 
     mop_title = "*Moroten och Piskan:*"
     finnut_title = "*Finn ut:*"
+    bryggan_title = "*Bryggan:*"
 
     mop_part = f"{mop_title}\n{mop}"
     finnut_part = f"{finnut_title}\n{finnut}"
+    bryggan_part = f"{bryggan_title}\n{bryggan}"
 
-    msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n\n{lemani}"
+    if bryggan != "":
+        msg = f"{title}\n\n\n{finnut_part}\n\n{mop_part}\n\n\n{bryggan_part}\n\n\n{lemani}"
+    else:
+        msg = f"{title}\n\n\n{finnut_part}\n\n{mop_part}\n\n\n{lemani}"
 
     # Send message with potential image attachment(s?)
     send_message(msg, attachments)
