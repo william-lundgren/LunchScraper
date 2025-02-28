@@ -105,9 +105,6 @@ def scrape_mop():
 
 
 def scrape_bryggan():
-    with open("bryggan2.html") as file:
-        content = file.read()
-
     url = "https://mersmak.me/vara-stallen/bryggan/"
     response = requests.get(url)
     content = response.content
