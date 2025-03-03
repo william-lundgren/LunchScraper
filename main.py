@@ -286,15 +286,16 @@ def scrape_lemani():
 
 
 def send_message(msg, attachments=None):
-    print("We got project dir:", PROJECT_DIR)
-    print("channel got:", getenv("channel"))
+    # Get envirnment variable for slack token
     token = getenv("token")
+
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
+
     # print(client.conversations_list())
-    meme_num = randint(0, 28)
 
     # Get random meme
+    meme_num = randint(0, 28)
     meme = f"{PROJECT_DIR}/memes/meme_{meme_num}.png"
 
     # If image was successfully collected attach it, otherwise sent message without.
@@ -330,12 +331,15 @@ def send_message(msg, attachments=None):
 
             files.append(dict_obt)
 
+    # Upload files to slack with given client and files
+    # Get environment variable for channel ID
     client.files_upload_v2(
         file_uploads=files,
         channel=getenv("channel"),
-        initial_comment=msg #+ " meme dedicated to @NA" if meme_num == 4 else msg
+        initial_comment=msg + " meme dedicated to @NA" if meme_num == 4 and len(attachments) < 2 else msg
     )
-    print("Uploaded files")
+    print("Uploaded files successfully")
+
 
 def main():
     global PROFILE_DIR
@@ -350,6 +354,7 @@ def main():
         PROFILE_DIR = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
     else:
         raise EnvironmentError("Provide path to profile")
+
     attachments = []
 
     lemani_code = scrape_lemani()
@@ -400,14 +405,14 @@ def main():
     finnut_title = "*Finn ut:*"
     bryggan_title = "*Bryggan:*"
 
-    mop_part = f"{mop_title}\n{mop}"
-    finnut_part = f"{finnut_title}\n{finnut}"
-    bryggan_part = f"{bryggan_title}\n{bryggan}"
+    mop_part = f"{mop_title}\n{mop.strip()}"
+    finnut_part = f"{finnut_title}\n{finnut.strip()}"
+    bryggan_part = f"{bryggan_title}\n{bryggan.strip()}"
 
     if bryggan != "":
-        msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n{bryggan_part}\n\n{lemani}"
+        msg = f"{title}\n\n\n{finnut_part}\n\n\n{mop_part}\n\n\n{bryggan_part}\n\n\n{lemani}"
     else:
-        msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n{lemani}"
+        msg = f"{title}\n\n\n{finnut_part}\n\n\n{mop_part}\n\n\n{lemani}"
 
     # Send message with potential image attachment(s)
     print("Attempting to send message")
