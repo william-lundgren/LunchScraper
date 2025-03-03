@@ -286,24 +286,19 @@ def scrape_lemani():
 
 
 def send_message(msg, attachments=None):
-    #find_week_day()
+    print("We got project dir:", PROJECT_DIR)
+    print("channel got:", getenv("channel"))
     token = getenv("token")
     # Set up a WebClient with the Slack OAuth token
     client = WebClient(token=token)
     # print(client.conversations_list())
     meme_num = randint(0, 28)
 
-    # Get the absolute path to the project directory
-    #project_dir = Path(__file__).resolve().parent
-
     # Get random meme
     meme = f"{PROJECT_DIR}/memes/meme_{meme_num}.png"
 
-    # Bot channel: C08CZLA7CE6
-
     # If image was successfully collected attach it, otherwise sent message without.
     # Add description to say it failed to collect image.
-
     if not attachments:
         files = [
             {
@@ -340,7 +335,7 @@ def send_message(msg, attachments=None):
         channel=getenv("channel"),
         initial_comment=msg #+ " meme dedicated to @NA" if meme_num == 4 else msg
     )
-
+    print("Uploaded files")
 
 def main():
     global PROFILE_DIR
@@ -414,7 +409,8 @@ def main():
     else:
         msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n{lemani}"
 
-    # Send message with potential image attachment(s?)
+    # Send message with potential image attachment(s)
+    print("Attempting to send message")
     send_message(msg, attachments)
 
 
