@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup as bs
 import requests
 from datetime import datetime
 from slack_sdk import WebClient
-from date import find_week_day
 from PIL import Image
 from os import getenv
 from selenium.webdriver.support.ui import WebDriverWait
@@ -34,6 +33,10 @@ ica????
 mop
 taste the chinese?
 """
+
+# CONSTANTS
+PROJECT_DIR = Path(__file__).resolve().parent
+PROFILE_DIR = ""
 
 
 def get_weekday(date=None):
@@ -126,7 +129,7 @@ def scrape_bryggan():
 
 
 
-def scrape_finnut(profile_dir):
+def scrape_finnut():
     chosen_date = get_date()
 
     # URL to scrape
@@ -135,7 +138,7 @@ def scrape_finnut(profile_dir):
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
 
-    options.add_argument(profile_dir)
+    options.add_argument(PROFILE_DIR)
     options.add_argument("--headless")
     # Open the URL
 
@@ -185,17 +188,17 @@ def scrape_finnut(profile_dir):
     raise RuntimeError("Didnt find food")
 
 
-def scrape_lemani(profile_dir):
+def scrape_lemani():
     # LE MANI TIME
     url = "https://www.instagram.com/stories/lemanilund"
     print("Trying Le mani")
 
     # Get the absolute path to the project directory
-    project_dir = Path(__file__).resolve().parent
+    #project_dir = Path(__file__).resolve().parent
 
     options = webdriver.FirefoxOptions()
     options.add_argument("-profile")
-    options.add_argument(profile_dir)
+    options.add_argument(PROFILE_DIR)
     options.add_argument("--headless")
     options.add_argument("--enable-javascript")
     options.add_argument("--incognito")
@@ -258,11 +261,11 @@ def scrape_lemani(profile_dir):
     time.sleep(1)
 
     print("Saving lemani screenshot")
-    driver.get_screenshot_as_file(f'{project_dir}/lemani.png')
+    driver.get_screenshot_as_file(f'{PROJECT_DIR}/lemani.png')
 
     driver.quit()
 
-    with Image.open(f"{project_dir}/lemani.png") as im:
+    with Image.open(f"{PROJECT_DIR}/lemani.png") as im:
         # Size of the image in pixels (size of original image)
         # (This is not mandatory)
         width, height = im.size
@@ -277,7 +280,7 @@ def scrape_lemani(profile_dir):
         # (It will not change original image)
         im1 = im.crop((left, top, right, bottom))
 
-        im1.save(f"{project_dir}/lemani.png")
+        im1.save(f"{PROJECT_DIR}/lemani.png")
 
 
     print("Le mani succeeded")
@@ -293,10 +296,10 @@ def send_message(msg, attachments=None):
     meme_num = randint(0, 28)
 
     # Get the absolute path to the project directory
-    project_dir = Path(__file__).resolve().parent
+    #project_dir = Path(__file__).resolve().parent
 
     # Get random meme
-    meme = f"{project_dir}/memes/meme_{meme_num}.png"
+    meme = f"{PROJECT_DIR}/memes/meme_{meme_num}.png"
 
     # Bot channel: C08CZLA7CE6
 
@@ -342,42 +345,44 @@ def send_message(msg, attachments=None):
 
 
 def main():
-    project_dir = Path(__file__).resolve().parent
+    global PROFILE_DIR
+    #project_dir = Path(__file__).resolve().parent
 
     # Check if os is mac
     if platform == "darwin":
         # path for testing on mac
-        profile_dir = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
+        PROFILE_DIR = "Users/william/Library/Application Support/Firefox/Profiles/zkr8w5jt.default-release"
     elif platform == "linux":
         # path for ubuntu server
-        profile_dir = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
+        PROFILE_DIR = "/home/william/FoodScraperProject/zkr8w5jt.default-release"
     else:
         raise EnvironmentError("Provide path to profile")
     attachments = []
 
-    lemani_code = scrape_lemani(profile_dir)
-    print("Status:",lemani_code)
+    lemani_code = scrape_lemani()
+    print("Status:", lemani_code)
 
     if lemani_code == 0:
-        attachments.append(f"{project_dir}/lemani.png")
+        attachments.append(f"{PROJECT_DIR}/lemani.png")
 
+    # Bad temporary code
+    # TODO fix proper error handling and error codes
     try:
         print("Trying finnut")
-        finnut = scrape_finnut(profile_dir)
+        finnut = scrape_finnut()
     except Exception as e:
         finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:\n"
         print("Finn ut died")
         print(e)
-        meme = f"{project_dir}/memes/finnut_broke.png"
+        meme = f"{PROJECT_DIR}/memes/finnut_broke.png"
         attachments.append(meme)
 
     try:
         mop = scrape_mop()
     except Exception:
         mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:\n"
-        meme = f"{project_dir}/memes/mop_broke.png"
+        meme = f"{PROJECT_DIR}/memes/mop_broke.png"
         attachments.append(meme)
-
     try:
         bryggan = scrape_bryggan()
     except Exception:
@@ -401,9 +406,9 @@ def main():
     bryggan_part = f"{bryggan_title}\n{bryggan}"
 
     if bryggan != "":
-        msg = f"{title}\n\n\n{finnut_part}\n\n{mop_part}\n\n\n{bryggan_part}\n\n\n{lemani}"
+        msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n{bryggan_part}\n\n{lemani}"
     else:
-        msg = f"{title}\n\n\n{finnut_part}\n\n{mop_part}\n\n\n{lemani}"
+        msg = f"{title}\n\n{finnut_part}\n\n{mop_part}\n\n{lemani}"
 
     # Send message with potential image attachment(s?)
     send_message(msg, attachments)
