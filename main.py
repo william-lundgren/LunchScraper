@@ -87,10 +87,8 @@ def scrape_mop():
     soup = bs(html, "lxml")
     all_info = soup.find("div", "event-info")
     food_list = all_info.find_all("p")
-    # print("foodlist:")
-    # for i in food_list:
-    #     print(i.text)
-    i, j = 1, 1
+
+    i, j = 0, 0
     green = food_list[i].text
     normal = food_list[j].text
 
@@ -370,6 +368,7 @@ def main():
     try:
         print("Trying finnut")
         finnut = scrape_finnut()
+        print("Finnut fine")
     except Exception as e:
         finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:\n"
         print("Finn ut died")
@@ -378,14 +377,19 @@ def main():
         attachments.append(meme)
 
     try:
+        print("Trying MoP")
         mop = scrape_mop()
+        print("MoP fine")
     except Exception:
         mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:\n"
         meme = f"{PROJECT_DIR}/memes/mop_broke.png"
         attachments.append(meme)
     try:
+        print("Trying bryggan")
         bryggan = scrape_bryggan()
+        print("Bryggan fine")
     except Exception:
+        print("Bryggan no work")
         bryggan = ""
 
     if lemani_code == 0:  # successfully got le mani
