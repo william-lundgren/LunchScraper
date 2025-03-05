@@ -1,0 +1,32 @@
+name: Deploy on Push
+
+on:
+  push:
+    branches:
+      - main  # Adjust if using a different branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup SSH and Deploy
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+      run: |
+        # Set up SSH Key
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+        # SSH into the server and pull the latest code
+        ssh -i ~/.ssh/deploy_key $SSH_USER@$SSH_HOST << 'EOF'
+          cd /home/william/FoodScraperProject/LunchScraper
+          git pull origin main
+        EOF
