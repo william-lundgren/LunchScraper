@@ -94,6 +94,7 @@ def scrape_mop_new():
     if s is None:
         s = soup.find(string=f"{curr_day} {date}")
 
+    # Find interesting lines
     while "dagens" not in s.text.lower():
         s = s.next
     green = s.text
