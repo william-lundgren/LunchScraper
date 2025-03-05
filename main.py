@@ -306,7 +306,6 @@ def scrape_lemani():
 
         im1.save(f"{PROJECT_DIR}/lemani.png")
 
-
     print("Le mani succeeded")
     return 0
 
