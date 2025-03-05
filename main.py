@@ -78,6 +78,33 @@ def get_date():
     return chosen_date
 
 
+def scrape_mop_new():
+    url = "https://morotenopiskan.se/lunch/"
+    response = requests.get(url)
+    html = response.content
+    soup = bs(html, "lxml")
+
+    # Weekday in Swedish
+    curr_day = get_weekday()
+    s = soup.find(string=curr_day)
+
+    # Date in format D/M
+    date = datetime.today().strftime("%-d/%-m")
+
+    if s is None:
+        s = soup.find(string=f"{curr_day} {date}")
+
+    while "dagens" not in s.text.lower():
+        s = s.next
+    green = s.text
+
+    while "dagens" not in s.text.lower() or "gröna" in s.text.lower():
+        s = s.next
+    original = s.text
+
+    return f"\n{original}\n{green}"
+
+
 def scrape_mop():
     url = "https://morotenopiskan.se/"
     response = requests.get(url)
@@ -124,7 +151,6 @@ def scrape_bryggan():
     foods = foods_list[rel_index + 1: rel_index + 3]
 
     return "\n".join(foods)
-
 
 
 def scrape_finnut():
@@ -184,33 +210,6 @@ def scrape_finnut():
     # Close the browser
     driver.quit()
     raise RuntimeError("Didnt find food")
-
-
-def scrape_mop_new():
-    url = "https://morotenopiskan.se/lunch/"
-    response = requests.get(url)
-    html = response.content
-    soup = bs(html, "lxml")
-
-    # Weekday in Swedish
-    curr_day = get_weekday()
-    s = soup.find(string=curr_day)
-
-    # Date in format D/M
-    date = datetime.today().strftime("%-d/%-m")
-
-    if s is None:
-        s = soup.find(string=f"{curr_day} {date}")
-
-    while "dagens" not in s.text.lower():
-        s = s.next
-    green = s.text
-
-    while "dagens" not in s.text.lower() or "gröna" in s.text.lower():
-        s = s.next
-    original = s.text
-
-    return f"\n{original}\n{green}"
 
 
 def scrape_lemani():
