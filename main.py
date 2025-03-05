@@ -186,6 +186,33 @@ def scrape_finnut():
     raise RuntimeError("Didnt find food")
 
 
+def scrape_mop_new():
+    url = "https://morotenopiskan.se/lunch/"
+    response = requests.get(url)
+    html = response.content
+    soup = bs(html, "lxml")
+
+    # Weekday in Swedish
+    curr_day = get_weekday()
+    s = soup.find(string=curr_day)
+
+    # Date in format D/M
+    date = datetime.today().strftime("%-d/%-m")
+
+    if s is None:
+        s = soup.find(string=f"{curr_day} {date}")
+
+    while "dagens" not in s.text.lower():
+        s = s.next
+    green = s.text
+
+    while "dagens" not in s.text.lower() or "gröna" in s.text.lower():
+        s = s.next
+    original = s.text
+
+    return f"\n{original}\n{green}"
+
+
 def scrape_lemani():
     # LE MANI TIME
     url = "https://www.instagram.com/stories/lemanilund"
@@ -370,7 +397,7 @@ def main():
         finnut = scrape_finnut()
         print("Finnut fine")
     except Exception as e:
-        finnut = "Ice cream (finnut) machine broke. Have a good day.:wetwig:\n"
+        finnut = "Ice cream (finnut) machine broke :wetwig:\n"
         print("Finn ut died")
         print(e)
         meme = f"{PROJECT_DIR}/memes/finnut_broke.png"
@@ -378,12 +405,13 @@ def main():
 
     try:
         print("Trying MoP")
-        mop = scrape_mop()
+        mop = scrape_mop_new()
         print("MoP fine")
     except Exception:
-        mop = "Ice cream (mop) machine broke. Have a good day.:wetwig:\n"
+        mop = "Ice cream (mop) machine broke :wetwig:\n"
         meme = f"{PROJECT_DIR}/memes/mop_broke.png"
         attachments.append(meme)
+        print("MoP broke")
     try:
         print("Trying bryggan")
         bryggan = scrape_bryggan()
