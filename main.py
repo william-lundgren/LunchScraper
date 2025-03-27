@@ -99,7 +99,7 @@ def scrape_mop_new():
         s = s.next
     green = s.text
 
-    while "dagens" not in s.text.lower() or "gröna" in s.text.lower():
+    while "dagens" not in s.text.lower() or "dagens gröna" in s.text.lower():
         s = s.next
     original = s.text
 
@@ -447,4 +447,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    scrape_mop_new()
