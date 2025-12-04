@@ -312,6 +312,62 @@ def scrape_lemani():
 
 
 def send_message(msg, attachments=None):
+    # procedure for big slack
+    token = getenv("token_big")
+
+    # Set up a WebClient with the Slack OAuth token
+    client = WebClient(token=token)
+
+    #print(client.conversations_list())
+    
+    # Get random meme
+    meme_num = randint(0, 28)
+    meme = f"{PROJECT_DIR}/memes/meme_{meme_num}.png"
+
+    # If image was successfully collected attach it, otherwise sent message without.
+    # Add description to say it failed to collect image.
+    if not attachments:
+        files = [
+            {
+                "file": meme,
+                "title": "Relevant meme"
+            }
+        ]
+    elif len(attachments) == 1:
+        file = attachments[0]
+        files = [
+            {
+                "file": file,
+                "title": file.split("/")[-1].removesuffix(".png")
+            },
+
+            {
+                "file": meme,
+                "title": "Relevant meme"
+            }
+        ]
+
+    else:
+        files = []
+        for file_name in attachments:
+            dict_obt = {
+                "file": file_name,
+                "title": "Relevant meme"
+            }
+
+            files.append(dict_obt)
+
+    # Upload files to slack with given client and files
+    # Get environment variable for channel ID (big slack)
+    client.files_upload_v2(
+        file_uploads=files,
+        channel=getenv("channel_big"),
+        initial_comment=msg
+    )
+    print("Uploaded files successfully to big slack")
+    return
+
+    # Procedure for small (original) slack
     # Get envirnment variable for slack token
     token = getenv("token")
 
@@ -362,9 +418,10 @@ def send_message(msg, attachments=None):
     client.files_upload_v2(
         file_uploads=files,
         channel=getenv("channel"),
-        initial_comment=msg + " meme dedicated to @NA" if meme_num == 4 and len(attachments) < 2 else msg
+        initial_comment=msg
     )
-    print("Uploaded files successfully")
+
+    print("Uploaded files successfully to small slack")
 
 
 def main():
@@ -447,5 +504,5 @@ def main():
 
 
 if __name__ == "__main__":
-    #main()
-    scrape_mop_new()
+    main()
+    #scrape_mop_new()
